@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+<PropertyGroup>
+  <!-- NuGet Metadata -->
+  <PackageId>YamSort</PackageId>
+  <Version>1.0.0</Version>
+  <Authors>Gary Gende</Authors>
+  <Description>YamSort is a stable sorting algorithm with optimizations for sorted and semi-sorted data. YamSort works with all comparable data types (all types that implement IComparable&lt;T&gt;). It is compatible with .NET Standard 2.1, with support for sorintg List&lt;T&gt; only available in .NET 6+.</Description>
+  <RepositoryUrl>https://github.com/gendeg/YamSort</RepositoryUrl>
+  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+</PropertyGroup>
+
+</Project>
