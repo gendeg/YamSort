@@ -1,7 +1,9 @@
 ## Overview
 YamSort is a stable sorting algorithm written in C# with optimizations for sorted and semi-sorted data
 
-YamSort works with all comparable data types (all types that implement IComparable<T>). It is compatible with .NET Standard 2.1 (with some features only available in .NET 6+). It has a competitive performance profile with the unstable built-in Array.Sort() while being faster than the stable LINQ OrderBy() method in almost all situations.
+YamSort is compatible with .NET Standard 2.1 and works with all comparable data types (all types that implement `IComparable<T>`). It has a competitive performance profile with the unstable built-in `Array.Sort()` while being faster than the stable LINQ `OrderBy()` method in almost all situations.
+
+YamSort accepts `T[]`, `Span<T>`, `List<T>`, and `IList<T>` data structures.  It has the option to sort those objects in place or return a new object.
 
 ## Performance Analysis
 
@@ -10,8 +12,10 @@ YamSort works with all comparable data types (all types that implement IComparab
 - O(n log n) - Average and worst case
 
 #### Memory Complexity
-- O(n) - Uses a single n/2-sized buffer
-- GC Impact - C# implementation sources the buffer from ArrayPool resulting in a minimal amount of garbage collection pressure
+- O(n) - Typically uses a single n/2-sized buffer (see note)
+- GC Impact - Sources the buffer from ArrayPool, resulting in 0 heap allocations
+
+NOTE: Creates and additional n-sized buffer when sorting `IList<T>` types, for a total memory use of 1.5n; in .NET 6+, sorting `List<T>` specifically does not require this extra buffer
 
 #### Benchmark Highlights
 
@@ -39,9 +43,9 @@ OrderBy   | 59.79 ms
 
 ## Usage
 
-First, download `YamSort.cs` from GitHub and copy it into your project.
+First, either import YamSort from NuGet or download `YamSort.cs` from GitHub and copy it into your project.
 
-To use YamSort, import the `YamSort` namespace and call `YamSorter.Sort()` on your target array or list. Sorting `List<T>` requires .NET 6.0 and higher. A separate `YamSorter.SortReturning()` method is available to return a new sorted collection without modifying the original.
+To use YamSort, use the `YamSort` namespace and call `YamSorter.Sort()` on your target array or list. A separate `YamSorter.SortReturning()` method is available to return a new sorted collection without modifying the original.
 
 *Example:*
 ```
@@ -66,6 +70,11 @@ public class YamSortDemo
         int[] newArray = YamSorter.SortReturning(referenceArray);
         // referenceArray still equals [4, 1, 3, 2]
         // newArray equals [1, 2, 3, 4]
+
+        CustomIList<int> referenceList = [4, 1, 3, 2];
+        CustomIList<int> newList = (CustomIList<int>)YamSorter.SortReturning(referenceList);
+        // referenceList still equals [4, 1, 3, 2]
+        // newList equals [1, 2, 3, 4]
     }
 }
 ```

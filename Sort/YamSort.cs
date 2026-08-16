@@ -22,6 +22,11 @@ public static partial class YamSorter
 
     // PUBLIC INTERFACE//
 
+    public static void Sort<T>(Span<T> span) where T : IComparable<T>
+    {
+        SortSetup(span);
+    }
+
     public static void Sort<T>(T[] arr) where T : IComparable<T>
     {
         SortSetup(arr.AsSpan());
@@ -35,18 +40,73 @@ public static partial class YamSorter
     }
 
 #if NET6_0_OR_GREATER
-    public static void Sort<T>(List<T> list) where T : IComparable<T>
+    public static void Sort<T>(IList<T> list) where T : IComparable<T>
     {
-        SortSetup(CollectionsMarshal.AsSpan(list));
+        if (list is List<T> concreteList)
+            SortSetup(CollectionsMarshal.AsSpan(concreteList));
+        else
+        {
+            T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+            try
+            {
+                list.CopyTo(tempArr, 0);
+                Span<T> span = tempArr.AsSpan(0, list.Count);
+                SortSetup(span);
+                for (int i = 0; i < list.Count; i++)
+                    list[i] = span[i];
+            }
+            finally
+            {
+                ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+            }
+        }
     }
 
     public static List<T> SortReturning<T>(List<T> list) where T : IComparable<T>
     {
-        List<T> newList = new List<T>(list);
+        List<T> newList = new(list);
         SortSetup(CollectionsMarshal.AsSpan(newList));
         return newList;
     }
+
+#else
+    public static void Sort<T>(IList<T> list) where T : IComparable<T>
+    {
+        T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+        try
+        {
+            list.CopyTo(tempArr, 0);
+            Span<T> span = tempArr.AsSpan(0, list.Count);
+            SortSetup(span);
+            for (int i = 0; i < list.Count; i++)
+                list[i] = span[i];
+        }
+        finally
+        {
+            ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+        }
+    }
 #endif
+
+    public static IList<T> SortReturning<T>(IList<T> list) where T : IComparable<T>
+    {
+        T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+        try
+        {
+            IList<T> newList = Activator.CreateInstance(list.GetType()) as IList<T>
+                ?? throw new InvalidOperationException("Could not create a new instance of the list type.");
+            list.CopyTo(tempArr, 0);
+            Span<T> span = tempArr.AsSpan(0, list.Count);
+            SortSetup(span);
+            for (int i = 0; i < list.Count; i++)
+                newList.Add(span[i]);
+            return newList;
+        }
+        finally
+        {
+            ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+        }
+    }
 
 
     // PRIVATE IMPLEMENTATION //
@@ -637,43 +697,106 @@ public static partial class YamSorter
 }
 
 
-// CUSTOM COMPARER VARIANTS //
+
+
+// CUSTOM COMPARER VARIANT //
 
 public static partial class YamSorter
 {
 
     // PUBLIC INTERFACE//
+
+    public static void Sort<T>(Span<T> span, IComparer<T> comparer) where T : IComparable<T>
+    {
+        SortSetupCC(span, comparer);
+    }
+
     public static void Sort<T>(T[] arr, IComparer<T> comparer) where T : IComparable<T>
     {
-        SortSetupCC(arr.AsSpan(), comparer, true);
+        SortSetupCC(arr.AsSpan(), comparer);
     }
 
     public static T[] SortReturning<T>(T[] arr, IComparer<T> comparer) where T : IComparable<T>
     {
         T[] newArr = (T[])arr.Clone();
-        SortSetupCC(newArr.AsSpan(), comparer, true);
+        SortSetupCC(newArr.AsSpan(), comparer);
         return newArr;
     }
 
 #if NET6_0_OR_GREATER
-    public static void Sort<T>(List<T> list, IComparer<T> comparer) where T : IComparable<T>
+    public static void Sort<T>(IList<T> list, IComparer<T> comparer) where T : IComparable<T>
     {
-        SortSetupCC(CollectionsMarshal.AsSpan(list), comparer, true);
+        if (list is List<T> concreteList)
+            SortSetupCC(CollectionsMarshal.AsSpan(concreteList), comparer);
+        else
+        {
+            T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+            try
+            {
+                list.CopyTo(tempArr, 0);
+                Span<T> span = tempArr.AsSpan(0, list.Count);
+                SortSetupCC(span, comparer);
+                for (int i = 0; i < list.Count; i++)
+                    list[i] = span[i];
+            }
+            finally
+            {
+                ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+            }
+        }
     }
 
     public static List<T> SortReturning<T>(List<T> list, IComparer<T> comparer) where T : IComparable<T>
     {
-        List<T> newList = new List<T>(list);
-        SortSetupCC(CollectionsMarshal.AsSpan(newList), comparer, true);
+        List<T> newList = new(list);
+        SortSetupCC(CollectionsMarshal.AsSpan(newList), comparer);
         return newList;
+    }
+
+#else
+    public static void Sort<T>(IList<T> list, IComparer<T> comparer) where T : IComparable<T>
+    {
+        T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+        try
+        {
+            list.CopyTo(tempArr, 0);
+            Span<T> span = tempArr.AsSpan(0, list.Count);
+            SortSetupCC(span, comparer);
+            for (int i = 0; i < list.Count; i++)
+                list[i] = span[i];
+        }
+        finally
+        {
+            ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+        }
     }
 #endif
 
+    public static IList<T> SortReturning<T>(IList<T> list, IComparer<T> comparer) where T : IComparable<T>
+    {
+        T[] tempArr = ArrayPool<T>.Shared.Rent(list.Count);
+        try
+        {
+            IList<T> newList = Activator.CreateInstance(list.GetType()) as IList<T>
+                ?? throw new InvalidOperationException("Could not create a new instance of the list type.");
+            list.CopyTo(tempArr, 0);
+            Span<T> span = tempArr.AsSpan(0, list.Count);
+            SortSetupCC(span, comparer);
+            for (int i = 0; i < list.Count; i++)
+                newList.Add(span[i]);
+            return newList;
+        }
+        finally
+        {
+            ArrayPool<T>.Shared.Return(tempArr, clearArray: true);
+        }
+    }
+    
 
     // PRIVATE IMPLEMENTATION //
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void SortSetupCC<T, TComp>(Span<T> span, TComp comparer, bool customComparer)
+    private static void SortSetupCC<T, TComp>(Span<T> span, TComp comparer)
         where T : IComparable<T> where TComp : IComparer<T>
     {
         if (span.Length <= 1) return;
@@ -688,7 +811,7 @@ public static partial class YamSorter
             span = span[nanCount..];
         }
 
-        SortState<T> state = new(false, SEQ_DEFAULT, comparer, customComparer);
+        SortState<T> state = new(false, SEQ_DEFAULT, comparer, true);
 
         if (span.Length <= state.seqValues[state.seqScore])
         {

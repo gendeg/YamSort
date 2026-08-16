@@ -1,4 +1,5 @@
 using StabilityTests;
+using InterfaceTests;
 using YamSort;
 
 namespace FuzzingTests;
@@ -13,27 +14,21 @@ public class InputShapes
     [Fact]
     public void Sequential()
     {
-        for (int i = 0; i < LOOP_COUNT; i++)
-        {
-            int[] referenceArray = Enumerable.Range(1, ARRAY_SIZE).ToArray();
-            int[] array = (int[])referenceArray.Clone();
-            YamSorter.Sort(array);
-            Array.Sort(referenceArray);
-            Assert.Equal(referenceArray, array);
-        }
+        int[] referenceArray = Enumerable.Range(1, ARRAY_SIZE).ToArray();
+        int[] array = (int[])referenceArray.Clone();
+        YamSorter.Sort(array);
+        Array.Sort(referenceArray);
+        Assert.Equal(referenceArray, array);
     }
 
     [Fact]
     public void ReverseSequential()
     {
-        for (int i = 0; i < LOOP_COUNT; i++)
-        {
-            int[] referenceArray = Enumerable.Range(1, ARRAY_SIZE).Reverse().ToArray();
-            int[] array = (int[])referenceArray.Clone();
-            YamSorter.Sort(array);
-            Array.Sort(referenceArray);
-            Assert.Equal(referenceArray, array);
-        }
+        int[] referenceArray = Enumerable.Range(1, ARRAY_SIZE).Reverse().ToArray();
+        int[] array = (int[])referenceArray.Clone();
+        YamSorter.Sort(array);
+        Array.Sort(referenceArray);
+        Assert.Equal(referenceArray, array);
     }
 
     [Fact]
@@ -147,20 +142,17 @@ public class InputShapes
     [Fact]
     public void CleanPipeOrgan()
     {
-        for (int i = 0; i < LOOP_COUNT; i++)
+        int[] referenceArray = new int[ARRAY_SIZE];
+        int peaks = 10;
+        for (int j = 0; j < (peaks / 2); j++)
         {
-            int[] referenceArray = new int[ARRAY_SIZE];
-            int peaks = 10;
-            for (int j = 0; j < (peaks / 2); j++)
-            {
-                referenceArray = referenceArray.Concat(Enumerable.Range(1, ARRAY_SIZE/peaks).ToArray()).ToArray();
-                referenceArray = referenceArray.Concat(Enumerable.Range(1, ARRAY_SIZE/peaks).Reverse().ToArray()).ToArray();
-            }
-            int[] array = (int[])referenceArray.Clone();
-            YamSorter.Sort(array);
-            Array.Sort(referenceArray);
-            Assert.Equal(referenceArray, array);
+            referenceArray = referenceArray.Concat(Enumerable.Range(1, ARRAY_SIZE/peaks).ToArray()).ToArray();
+            referenceArray = referenceArray.Concat(Enumerable.Range(1, ARRAY_SIZE/peaks).Reverse().ToArray()).ToArray();
         }
+        int[] array = (int[])referenceArray.Clone();
+        YamSorter.Sort(array);
+        Array.Sort(referenceArray);
+        Assert.Equal(referenceArray, array);
     }
 
     [Fact]
@@ -259,5 +251,95 @@ public class StabilityTests
             YamSorter.Sort(array);
             Assert.Equal(referenceArray.OrderBy(x => x.SortVal), array);
         }
+    }
+}
+
+
+public class CustomComparerTests
+{
+    const int ARRAY_SIZE = 500000;
+    const int LOOP_COUNT = 10;
+
+    [Fact]
+    public void CustomComparer()
+    {
+        for (int i = 0; i < LOOP_COUNT; i++)
+        {
+            StableInt[] referenceArray = new StableInt[ARRAY_SIZE];
+            Random rand = new(DateTime.UtcNow.Millisecond);
+            for (int j = 0; j < ARRAY_SIZE; j++)
+            {
+                referenceArray[j] = new StableInt(rand.Next(1, ARRAY_SIZE / 10), j);
+            }
+            StableInt[] array = (StableInt[])referenceArray.Clone();
+            YamSorter.Sort(array, new StableIntComparer());
+            Assert.Equal(referenceArray.OrderBy(x => x.SortVal), array);
+        }
+    }
+
+    private class StableIntComparer : IComparer<StableInt>
+    {
+        public int Compare(StableInt x, StableInt y)
+        {
+            return x.SortVal.CompareTo(y.SortVal);
+        }
+    }
+}
+
+
+public class IListTests
+{
+    const int ARRAY_SIZE = 500000;
+    const int LOOP_COUNT = 10;
+    Random rand = new(DateTime.UtcNow.Millisecond);
+
+    [Fact]
+    public void IListRandom()
+    {
+        for (int i = 0; i < LOOP_COUNT; i++)
+        {
+            Random rand = new(DateTime.UtcNow.Millisecond);
+            CustomIList<int> referenceArray = new();
+            CustomIList<int> array = new();
+            for (int j = 0; j < ARRAY_SIZE; j++)
+            {
+                int val = rand.Next(1, ARRAY_SIZE);
+                referenceArray.Add(val);
+                array.Add(val);
+            }
+            YamSorter.Sort(array);
+            Assert.Equal(referenceArray.OrderBy(x => x), array);
+        }
+    }
+
+    [Fact]
+    public void IListSequential()
+    {
+        CustomIList<int> referenceArray = new();
+        CustomIList<int> array = new();
+        for (int j = 0; j < ARRAY_SIZE; j++)
+        {
+            int val = j + 1;
+            referenceArray.Add(val);
+            array.Add(val);
+        }
+        YamSorter.Sort(array);
+        Assert.Equal(referenceArray.OrderBy(x => x), array);
+    }
+
+
+    [Fact]
+    public void IListReverseSequential()
+    {
+        CustomIList<int> referenceArray = new();
+        CustomIList<int> array = new();
+        for (int j = 0; j < ARRAY_SIZE; j++)
+        {
+            int val = ARRAY_SIZE - j;
+            referenceArray.Add(val);
+            array.Add(val);
+        }
+        YamSorter.Sort(array);
+        Assert.Equal(referenceArray.OrderBy(x => x), array);
     }
 }

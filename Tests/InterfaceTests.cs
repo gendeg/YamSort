@@ -1,3 +1,4 @@
+using System.Collections;
 using YamSort;
 
 namespace InterfaceTests;
@@ -221,40 +222,6 @@ public class DoubleInterfaceTests
 }
 
 
-public class ListInterfaceTests
-{
-    [Fact]
-    public void SortListOfInt()
-    {
-        List<int> list = [3, 1, 2];
-        YamSorter.Sort(list);
-
-        List<int> referenceList = [1, 2, 3];
-        Assert.Equal(referenceList, list);
-    }
-
-    [Fact]
-    public void SortListOfString()
-    {
-        List<string> list = ["c", "a", "b"];
-        YamSorter.Sort(list);
-
-        List<string> referenceList = ["a", "b", "c"];
-        Assert.Equal(referenceList, list);
-    }
-
-    [Fact]
-    public void SortListOfDouble()
-    {
-        List<double> list = [3.0, 1.0, 2.0];
-        YamSorter.Sort(list);
-
-        List<double> referenceList = [1.0, 2.0, 3.0];
-        Assert.Equal(referenceList, list);
-    }
-}
-
-
 public class CustomClassInterfaceTests
 {
     public class Person(string name, int age) : IComparable<Person>
@@ -292,6 +259,111 @@ public class CustomClassInterfaceTests
 }
 
 
+public class SpanInterfaceTests
+{
+    [Fact]
+    public void SortSpanOfInt()
+    {
+        int[] array = [3, 1, 2];
+        Span<int> span = array.AsSpan();
+        YamSorter.Sort(span);
+
+        int[] referenceArray = [1, 2, 3];
+        Assert.Equal(referenceArray.AsSpan(), span);
+    }
+
+    [Fact]
+    public void SortSpanOfString()
+    {
+        string[] array = ["c", "a", "b"];
+        Span<string> span = array.AsSpan();
+        YamSorter.Sort(span);
+
+        string[] referenceArray = ["a", "b", "c"];
+        Assert.Equal(referenceArray.AsSpan(), span);
+    }
+
+    [Fact]
+    public void SortSpanOfDouble()
+    {
+        double[] array = [3.0, 1.0, 2.0];
+        Span<double> span = array.AsSpan();
+        YamSorter.Sort(span);
+
+        double[] referenceArray = [1.0, 2.0, 3.0];
+        Assert.Equal(referenceArray.AsSpan(), span);
+    }
+}
+
+
+public class ListInterfaceTests
+{
+    [Fact]
+    public void SortListOfInt()
+    {
+        List<int> list = [3, 1, 2];
+        YamSorter.Sort(list);
+
+        List<int> referenceList = [1, 2, 3];
+        Assert.Equal(referenceList, list);
+    }
+
+    [Fact]
+    public void SortListOfString()
+    {
+        List<string> list = ["c", "a", "b"];
+        YamSorter.Sort(list);
+
+        List<string> referenceList = ["a", "b", "c"];
+        Assert.Equal(referenceList, list);
+    }
+
+    [Fact]
+    public void SortListOfDouble()
+    {
+        List<double> list = [3.0, 1.0, 2.0];
+        YamSorter.Sort(list);
+
+        List<double> referenceList = [1.0, 2.0, 3.0];
+        Assert.Equal(referenceList, list);
+    }
+}
+
+
+public class IListInterfaceTests
+{
+    [Fact]
+    public void SortIListOfInt()
+    {
+        CustomIList<int> list = [3, 1, 2];
+        YamSorter.Sort(list);
+
+        CustomIList<int> referenceList = [1, 2, 3];
+        Assert.Equal(referenceList, list);
+    }
+
+    [Fact]
+    public void SortIListOfString()
+    {
+        CustomIList<string> list = ["c", "a", "b"];
+        YamSorter.Sort(list);
+
+        CustomIList<string> referenceList = ["a", "b", "c"];
+        Assert.Equal(referenceList, list);
+    }
+
+    [Fact]
+    public void SortIListOfDouble()
+    {
+        CustomIList<double> list = [3.0, 1.0, 2.0];
+        YamSorter.Sort(list);
+
+        CustomIList<double> referenceList = [1.0, 2.0, 3.0];
+        Assert.Equal(referenceList, list);
+    }
+}
+
+
 public class ReturningSortTests
 {
     [Fact]
@@ -312,6 +384,17 @@ public class ReturningSortTests
         List<int> sortedList = YamSorter.SortReturning(list);
 
         List<int> referenceList = [1, 2, 3];
+        Assert.Equal(referenceList, sortedList);
+        Assert.Equal([3, 1, 2], list);
+    }
+
+    [Fact]
+    public void SortReturningIList()
+    {
+        CustomIList<int> list = [3, 1, 2];
+        CustomIList<int> sortedList = (CustomIList<int>)YamSorter.SortReturning(list);
+
+        CustomIList<int> referenceList = [1, 2, 3];
         Assert.Equal(referenceList, sortedList);
         Assert.Equal([3, 1, 2], list);
     }
@@ -351,6 +434,27 @@ public class CustomComparerTests
     }
 
     [Fact]
+    public void SortIListWithCustomComparer()
+    {
+        CustomIList<int> list = [3, 1, 6, 5, 4, -1, -3, -6];
+        YamSorter.Sort(list, new StrangeComparer());
+
+        CustomIList<int> referenceList = [5, 4, 3, 1, -1, -3, 6, -6];
+        Assert.Equal(referenceList, list);
+    }
+
+    [Fact]
+    public void SortSpanWithCustomComparer()
+    {
+        int[] array = [3, 1, 6, 5, 4, -1, -3, -6];
+        Span<int> span = array.AsSpan();
+        YamSorter.Sort(span, new StrangeComparer());
+
+        int[] referenceArray = [5, 4, 3, 1, -1, -3, 6, -6];
+        Assert.Equal(referenceArray.AsSpan(), span);
+    }
+
+    [Fact]
     public void SortReturningArrayWithCustomComparer()
     {
         int[] array = [3, 1, 6, 5, 4, -1, -3, -6];
@@ -371,4 +475,49 @@ public class CustomComparerTests
         Assert.Equal(referenceList, sortedList);
         Assert.Equal([3, 1, 6, 5, 4, -1, -3, -6], list);
     }
+
+    [Fact]
+    public void SortReturningIListWithCustomComparer()
+    {
+        CustomIList<int> list = [3, 1, 6, 5, 4, -1, -3, -6];
+        CustomIList<int> sortedList = (CustomIList<int>)YamSorter.SortReturning(list, new StrangeComparer());
+
+        CustomIList<int> referenceList = [5, 4, 3, 1, -1, -3, 6, -6];
+        Assert.Equal(referenceList, sortedList);
+        Assert.Equal([3, 1, 6, 5, 4, -1, -3, -6], list);
+    }
+}
+
+
+
+
+public class CustomIList<T> : IList<T>
+{
+    private List<T> _list = new List<T>();
+
+    public T this[int index] { get => _list[index]; set => _list[index] = value; }
+
+    public int Count => _list.Count;
+
+    public bool IsReadOnly => false;
+
+    public void Add(T item) => _list.Add(item);
+
+    public void Clear() => _list.Clear();
+
+    public bool Contains(T item) => _list.Contains(item);
+
+    public void CopyTo(T[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
+
+    public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
+
+    public int IndexOf(T item) => _list.IndexOf(item);
+
+    public void Insert(int index, T item) => _list.Insert(index, item);
+
+    public bool Remove(T item) => _list.Remove(item);
+
+    public void RemoveAt(int index) => _list.RemoveAt(index);
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
